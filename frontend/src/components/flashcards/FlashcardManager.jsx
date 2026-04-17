@@ -7,7 +7,7 @@ import {
   Sparkles,
   Brain,
 } from "lucide-react";
-import toast from "react-hot-toast";
+import toast, { ToastBar } from "react-hot-toast";
 import moment from "moment";
 import flashcardService from "../../services/flashcardService";
 import aiService from "../../services/aiService";
@@ -91,7 +91,27 @@ const FlashcardManager = ({ documentId }) => {
     }
   };
 
-  const hanldeToggleStar = async (cardId) => {};
+  const handleToggleStar = async (cardId) => {
+    try {
+      await flashcardService.toggleStar(cardId);
+      const updatedSets = flashcardSets.map((set) => {
+        if (set._id === selectedSet._id) {
+          const updatedCards = set.cards.map((card) =>
+            card._id === cardId
+              ? { ...card, isStarred: !card.isStarred }
+              : card,
+          );
+          return { ...set, cards: updatedCards };
+        }
+        return set;
+      });
+      setFlashcardSets(updatedSets);
+      setSelectedSet(updatedSets.find((set) => set._id === selectedSet._id));
+      toast.success("Flashcard starred status updated!");
+    } catch (error) {
+      toast.error("Failed to update star status.");
+    }
+  };
 
   const handleDeleteRequest = (e, set) => {
     e.stopPropagation();
@@ -104,7 +124,7 @@ const FlashcardManager = ({ documentId }) => {
     setDeleting(true);
     try {
       await flashcardService.deleteFlashcardSet(setToDelete._id);
-      toast.success("Flashcard set delted successfully!");
+      toast.success("Flashcard set deleted successfully!");
       setIsDeleteModalOpen(false);
       setSetToDelete(null);
       fetchFlashcardSets();
@@ -121,7 +141,68 @@ const FlashcardManager = ({ documentId }) => {
   };
 
   const renderFlashcardViewer = () => {
-    return "renderFlashcardViewer";
+    const currentCard = selectedSet.cards[currentCardIndex];
+
+    return (
+      <div className="space-y-8">
+        {/* Back Button */}
+        <button
+          onClick={() => setSelectedSet(null)}
+          className="group inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-emerald-600 transition-colors duration-200 cursor-pointer"
+        >
+          <ArrowLeft
+            className="w-4 h-4 group-hover:-translate-x-1 transition-transform duration-200"
+            strokeWidth={2}
+          />
+          Back to Sets
+        </button>
+
+        {/* Flashcard Display */}
+        <div className="flex flex-col items-center space-y-2">
+          <div className="w-full max-w-2xl">
+            <Flashcard
+              flashcard={currentCard}
+              onToggleStar={handleToggleStar}
+            />
+          </div>
+
+          {/* Navigation Controls */}
+          <div className="flex items-center gap-6">
+            <button
+              className="group flex items-center gap-2 px-5 h-11 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-sm rounded-xl transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-slate-100 cursor-pointer"
+              onClick={handlePrevCard}
+              disabled={selectedSet.cards.length <= 1}
+            >
+              <ChevronLeft
+                className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform duration-200"
+                strokeWidth={2.5}
+              />
+              Previous
+            </button>
+
+            <div className="px-4 py-2 bg-slate-50 rounded-lg border border-slate-200">
+              <span className="text-sm font-semibold text-slate-700">
+                {currentCardIndex + 1}{" "}
+                <span className="text-slate-400 font-normal"> / </span>{" "}
+                {selectedSet.cards.length}
+              </span>
+            </div>
+
+            <button
+              className="group flex items-center gap-2 px-5 h-11 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-sm rounded-xl transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-slate-100 cursor-pointer"
+              onClick={handleNextCard}
+              disabled={selectedSet.cards.length <= 1}
+            >
+              Next
+              <ChevronRight
+                strokeWidth={2.5}
+                className="w-4 h-4 group-hover:translate-x-0.5 transition-transform duration-200"
+              />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   const renderSetList = () => {
@@ -210,7 +291,9 @@ const FlashcardManager = ({ documentId }) => {
             >
               {/* Delete Button */}
               <button
-                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100"
+                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-rose-500 
+                hover:bg-rose-50 rounded-lg transition-all duration-200 
+                opacity-0 group-hover:opacity-100 hover:scale-102"
                 onClick={(e) => handleDeleteRequest(e, set)}
               >
                 <Trash2 strokeWidth={2} className="w-4 h-4 cursor-pointer" />

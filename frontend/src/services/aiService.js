@@ -9,7 +9,7 @@ const generateFlashcards = async (documentId, options) => {
     );
     return response.data;
   } catch (error) {
-    throw error.response?.data || { message: "Faild to generate flashcards" };
+    throw error.response?.data || { message: "Failed to generate flashcards" };
   }
 };
 
@@ -21,7 +21,7 @@ const generateQuiz = async (documentId, options) => {
     });
     return response.data;
   } catch (error) {
-    throw error.response?.data || { message: "Faild to generate quiz" };
+    throw error.response?.data || { message: "Failed to generate quiz" };
   }
 };
 
@@ -44,7 +44,7 @@ const chat = async (documentId, message) => {
     }); // Removed history from payload
     return response.data?.data;
   } catch (error) {
-    throw error.response?.data || { message: "Faild to generate summary" };
+    throw error.response?.data || { message: "Failed to generate summary" };
   }
 };
 
@@ -56,7 +56,7 @@ const explainConcept = async (documentId, concept) => {
     });
     return response.data?.data;
   } catch (error) {
-    throw error.response?.data || { message: "Faild to explain concept" };
+    throw error.response?.data || { message: "Failed to explain concept" };
   }
 };
 
@@ -67,7 +67,7 @@ const getChatHistory = async (documentId) => {
     );
     return response.data?.data || [];
   } catch (error) {
-    throw error.response?.data || { message: "Faild to generate summary" };
+    throw error.response?.data || { message: "Failed to generate summary" };
   }
 };
 

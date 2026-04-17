@@ -6,7 +6,7 @@ const getDocuments = async () => {
     const response = await axiosInstance.get(API_PATHS.DOCUMENTS.GET_DOCUMENTS);
     return response.data?.data;
   } catch (error) {
-    throw error.response?.data || { message: "Faild to fetch documents" };
+    throw error.response?.data || { message: "Failed to fetch documents" };
   }
 };
 
@@ -23,7 +23,7 @@ const uploadDocument = async (formData) => {
     );
     return response.data;
   } catch (error) {
-    throw error.response?.data || { message: "Faild to upload document" };
+    throw error.response?.data || { message: "Failed to upload document" };
   }
 };
 
@@ -34,7 +34,7 @@ const deleteDocument = async (id) => {
     );
     return response.data;
   } catch (error) {
-    throw error.response?.data || { message: "Faild to delete document" };
+    throw error.response?.data || { message: "Failed to delete document" };
   }
 };
 
@@ -45,7 +45,7 @@ const getDocumentById = async (id) => {
     );
     return response.data;
   } catch (error) {
-    throw error.response?.data || { message: "Faild to fetch documents" };
+    throw error.response?.data || { message: "Failed to fetch documents" };
   }
 };
 

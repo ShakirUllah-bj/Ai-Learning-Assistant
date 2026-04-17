@@ -8,7 +8,7 @@ const getQuizzesForDocument = async (documentId) => {
     );
     return response.data;
   } catch (error) {
-    throw error.response?.data || { message: "Faild to fetch quizzes" };
+    throw error.response?.data || { message: "Failed to fetch quizzes" };
   }
 };
 
@@ -19,7 +19,7 @@ const getQuizById = async (quizId) => {
     );
     return response.data;
   } catch (error) {
-    throw error.response?.data || { message: "Faild to fetch quizz" };
+    throw error.response?.data || { message: "Failed to fetch quiz" };
   }
 };
 
@@ -31,7 +31,7 @@ const submitQuiz = async (quizId, answers) => {
     );
     return response.data;
   } catch (error) {
-    throw error.response?.data || { message: "Faild to submit quizz" };
+    throw error.response?.data || { message: "Failed to submit quiz" };
   }
 };
 
@@ -42,7 +42,7 @@ const getQuizResults = async (quizId) => {
     );
     return response.data;
   } catch (error) {
-    throw error.response?.data || { message: "Faild to fetch quiz results" };
+    throw error.response?.data || { message: "Failed to fetch quiz results" };
   }
 };
 
@@ -53,7 +53,7 @@ const deleteQuiz = async (quizId) => {
     );
     return response.data;
   } catch (error) {
-    throw error.response?.data || { message: "Faild to delete quiz" };
+    throw error.response?.data || { message: "Failed to delete quiz" };
   }
 };
 
