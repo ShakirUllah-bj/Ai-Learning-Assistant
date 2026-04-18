@@ -69,7 +69,12 @@ const QuizManager = ({ documentId }) => {
       toast.success(`${selectedQuiz.title || "Quiz"} deleted successfully!`);
       setIsDeleteModalOpen(false);
       setSelectedQuiz(null);
-      setQuizzes(quizzes.filter((quiz) => quiz._id !== selectedQuiz._id));
+      setQuizzes(
+        quizzes.filter(
+          (quiz) =>
+            (quiz._id || quiz.id) !== (selectedQuiz._id || selectedQuiz.id),
+        ),
+      );
     } catch (error) {
       toast.error(error.message || "Failed to delete quiz.");
     } finally {
@@ -93,7 +98,11 @@ const QuizManager = ({ documentId }) => {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {quizzes.map((quiz) => (
-          <QuizCard key={quiz._id} quiz={quiz} onDelete={handleDeleteRequest} />
+          <QuizCard
+            key={quiz._id || quiz.id}
+            quiz={quiz}
+            onDelete={handleDeleteRequest}
+          />
         ))}
       </div>
     );
