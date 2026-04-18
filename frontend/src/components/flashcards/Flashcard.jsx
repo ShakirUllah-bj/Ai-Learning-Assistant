@@ -84,7 +84,7 @@ const Flashcard = ({ flashcard, onToggleStar }) => {
               className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 ${
                 flashcard.isStarred
                   ? "bg-white/30 backdrop-blur-sm text-white border border-white/40"
-                  : "bg-white/20 backdrop-blur-sm text-white/70 hover:bg-white/30 hover:text-white border border-white/20 "
+                  : "bg-white/20 backdrop-blur-sm text-white/70 hover:bg-white/30 hover:text-white border border-white/20 cursor-pointer"
               }`}
             >
               <Star
