@@ -57,12 +57,12 @@ const QuizTakePage = () => {
       const formattedAnswers = Object.keys(selectedAnswers).map(
         (questionId) => {
           const question = quiz.questions.find((q) => q._id === questionId);
-          const questionIdex = quiz.questions.findIndex(
+          const questionIndex = quiz.questions.findIndex(
             (q) => q._id === questionId,
           );
           const optionIndex = selectedAnswers[questionId];
           const selectedAnswer = question.options[optionIndex];
-          return { questionIdex, selectedAnswer };
+          return { questionIndex, selectedAnswer };
         },
       );
       await quizService.submitQuiz(quizId, formattedAnswers);
