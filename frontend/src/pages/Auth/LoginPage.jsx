@@ -2,7 +2,14 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/useAuth";
 import authService from "../../services/authService";
-import { BrainCircuit, Mail, Lock, ArrowRight } from "lucide-react";
+import {
+  BrainCircuit,
+  Mail,
+  Lock,
+  ArrowRight,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import toast from "react-hot-toast";
 
 const LoginPage = () => {
@@ -10,6 +17,7 @@ const LoginPage = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -105,12 +113,28 @@ const LoginPage = () => {
 
                 <input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   className="w-full h-12 pl-12 pr-4 border border-slate-300 rounded-xl bg-white text-slate-900 placeholder-slate-400 text-sm transition-all duration-200 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                 />
+                {/* Show and Hide Password */}
+                <div>
+                  {showPassword ? (
+                    <EyeOff
+                      className="absolute right-4 top-1/2 -translate-y-1/2 size-5 text-slate-400 cursor-pointer"
+                      strokeWidth={2}
+                      onClick={() => setShowPassword(!showPassword)}
+                    />
+                  ) : (
+                    <Eye
+                      className="absolute right-4 top-1/2 -translate-y-1/2 size-5 text-slate-400 cursor-pointer"
+                      strokeWidth={2}
+                      onClick={() => setShowPassword(!showPassword)}
+                    />
+                  )}
+                </div>
               </div>
             </div>
 
@@ -125,7 +149,7 @@ const LoginPage = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full h-12 flex items-center justify-center gap-2 bg-linear-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-sm font-semibold rounded-xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full h-12 flex items-center justify-center gap-2 bg-linear-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-sm font-semibold rounded-xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               {loading ? (
                 <>
@@ -147,7 +171,7 @@ const LoginPage = () => {
               Don’t have an account?{" "}
               <Link
                 to="/register"
-                className="font-medium text-emerald-600 hover:text-emerald-700 transition-colors"
+                className="font-medium text-emerald-600 hover:text-emerald-700 transition-colors cursor-pointer"
               >
                 Sign up
               </Link>
