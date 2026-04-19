@@ -50,7 +50,7 @@ export const getQuizById = async (req, res, next) => {
 };
 
 // @desc    Submit quiz answers
-// @route   GET /api/quizzes/:id/submit
+// @route   POST /api/quizzes/:id/submit
 // @access  Private
 export const submitQuiz = async (req, res, next) => {
   try {
