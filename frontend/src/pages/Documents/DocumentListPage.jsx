@@ -151,7 +151,7 @@ const DocumentListPage = () => {
 
       <div className="relative max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-center mb-10">
+        <div className="flex items-center justify-between mb-10">
           <div>
             <h1 className="text-2xl font-medium text-slate-900 tracking-tight mb-2">
               My Documents
