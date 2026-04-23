@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { AlertTriangle, Home } from "lucide-react";
+import { AlertTriangle, LayoutDashboard } from "lucide-react";
 
 const NotFoundPage = () => {
   return (
@@ -19,7 +19,7 @@ const NotFoundPage = () => {
           to="/"
           className="inline-flex items-center gap-2 px-6 h-11 bg-blue-500 hover:bg-blue-600 text-white font-semibold text-sm rounded-xl transition-colors duration-200 shadow-lg"
         >
-          <Home strokeWidth={2} className="w-4 h-4" />
+          <LayoutDashboard strokeWidth={2} className="w-4 h-4" />
           Go Dashboard
         </Link>
       </div>
