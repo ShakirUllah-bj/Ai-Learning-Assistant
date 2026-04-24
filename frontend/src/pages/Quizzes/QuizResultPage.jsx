@@ -113,7 +113,7 @@ const QuizResultPage = () => {
             </p>
           </div>
           {/* Stats */}
-          <div className="flex items-center justify-center gap-4 pt-4">
+          <div className="flex items-center justify-center gap-4 pt-4 flex-wrap">
             <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl">
               <Target className="size-4 text-slate-600" strokeWidth={2} />
               <span className="text-sm font-semibold text-slate-700">
