@@ -126,13 +126,13 @@ const QuizResultPage = () => {
                 strokeWidth={2}
               />
               <span className="text-sm font-semibold text-slate-700">
-                {correctAnswers > 0 ? correctAnswers : 0} Correct Answers
+                {correctAnswers.length} Correct Answers
               </span>
             </div>
             <div className="flex items-center gap-2 px-4 py-2 bg-rose-50 border border-rose-200 rounded-xl">
               <XCircle strokeWidth={2} className="size-4 text-slate-600" />
-              <span>
-                {incorrectAnswers > 0 ? incorrectAnswers : 0} Incorrect Answers
+              <span className="text-sm font-semibold text-slate-700">
+                {incorrectAnswers} Incorrect Answers
               </span>
             </div>
           </div>
