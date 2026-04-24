@@ -275,7 +275,7 @@ const FlashcardManager = ({ documentId }) => {
               </>
             ) : (
               <>
-                <Plus className="w-4 h-4" strokeWidth={2.5} />
+                <Plus className="w-4 h-4" strokeWidth={2.5} /> Generate New Set
               </>
             )}
           </button>
