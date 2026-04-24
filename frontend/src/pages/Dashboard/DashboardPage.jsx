@@ -54,7 +54,9 @@ const DashboardPage = () => {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-red-100 mb-4">
             <TrendingUp className="w-8 h-8 text-red-500" />
           </div>
-          <p className="text-red-600 text-sm font-medium mb-2">Error Loading Dashboard</p>
+          <p className="text-red-600 text-sm font-medium mb-2">
+            Error Loading Dashboard
+          </p>
           <p className="text-slate-600 text-sm">{error}</p>
         </div>
       </div>
@@ -201,12 +203,23 @@ const DashboardPage = () => {
                       </p>
                     </div>
                     {activity.link && (
-                      <a
-                        href={activity.link}
-                        className="ml-4 px-4 py-2 text-xs font-semibold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-all duration-200 whitespace-nowrap"
-                      >
-                        View
-                      </a>
+                      <>
+                        {activity.type === "quiz" ? (
+                          <a
+                            href={`/quizzes/${activity.id}/results`}
+                            className="ml-4 px-4 py-2 text-xs font-semibold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-all duration-200 whitespace-nowrap"
+                          >
+                            View
+                          </a>
+                        ) : (
+                          <a
+                            href={activity.link}
+                            className="ml-4 px-4 py-2 text-xs font-semibold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-all duration-200 whitespace-nowrap"
+                          >
+                            View
+                          </a>
+                        )}
+                      </>
                     )}
                   </div>
                 ))}
