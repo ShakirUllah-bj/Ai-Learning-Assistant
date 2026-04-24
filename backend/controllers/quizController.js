@@ -91,7 +91,22 @@ export const submitQuiz = async (req, res, next) => {
 
       if (questionIndex < quiz.questions.length) {
         const question = quiz.questions[questionIndex];
-        const isCorrect = selectedAnswer === question.correctAnswer;
+
+        // Normalize string: lowercase, remove extra spaces, and strip out option prefixes like '01: ' that AI might have included
+        const normalizeStr = (str) => {
+          if (!str) return "";
+          let cleaned = String(str).toLowerCase().trim().replace(/^(0[1-4]|[1-4])[):.-]?\s*/, "");
+          return cleaned.replace(/\s+/g, " ").replace(/[.,!?]+$/, "");
+        };
+
+        const cleanSelected = normalizeStr(selectedAnswer);
+        const cleanCorrect = normalizeStr(question.correctAnswer);
+
+        // Robust check: exact match, or check if one string represents a partial match of the other (for slightly different generated text)
+        const isCorrect =
+          cleanSelected === cleanCorrect ||
+          (cleanSelected.length > 3 && cleanCorrect.includes(cleanSelected)) ||
+          (cleanCorrect.length > 3 && cleanSelected.includes(cleanCorrect));
 
         if (isCorrect) correctCount++;
 
