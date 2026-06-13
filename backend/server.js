@@ -28,7 +28,7 @@ connectDB();
 //Middleware to handle CORS
 app.use(
   cors({
-    origin: "*",
+    origin: process.env.FRONTEND_URL || "http://localhost:5173",
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
