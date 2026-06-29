@@ -6,6 +6,8 @@ import {
   getProfile,
   updateProfile,
   changePassword,
+  forgotPassword,
+  resetPassword,
 } from "../controllers/authController.js";
 import protect from "../middleware/auth.js";
 
@@ -34,9 +36,24 @@ const loginValidation = [
   body("password").notEmpty().withMessage("Password is required"),
 ];
 
+const forgotPasswordValidation = [
+  body("email")
+    .isEmail()
+    .normalizeEmail()
+    .withMessage("Please provide a valid email"),
+];
+
+const resetPasswordValidation = [
+  body("password")
+    .isLength({ min: 6 })
+    .withMessage("Password must be at least 6 characters"),
+];
+
 // Public routes
 router.post("/register", registerValidation, register);
 router.post("/login", loginValidation, login);
+router.post("/forgot-password", forgotPasswordValidation, forgotPassword);
+router.post("/reset-password/:token", resetPasswordValidation, resetPassword);
 
 // Protected routes
 router.get("/profile", protect, getProfile);

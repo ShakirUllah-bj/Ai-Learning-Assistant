@@ -62,12 +62,37 @@ const changePassword = async (passwords) => {
   }
 };
 
+const forgotPassword = async (email) => {
+  try {
+    const response = await axiosInstance.post(API_PATHS.AUTH.FORGOT_PASSWORD, {
+      email,
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: "An unknown error occured" };
+  }
+};
+
+const resetPassword = async (token, password) => {
+  try {
+    const response = await axiosInstance.post(
+      API_PATHS.AUTH.RESET_PASSWORD(token),
+      { password },
+    );
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: "An unknown error occured" };
+  }
+};
+
 const authService = {
   login,
   register,
   getProfile,
   updateProfile,
   changePassword,
+  forgotPassword,
+  resetPassword,
 };
 
 export default authService;
