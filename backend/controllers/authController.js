@@ -116,6 +116,87 @@ export const login = async (req, res, next) => {
   }
 };
 
+const verifyGoogleToken = async (idToken) => {
+  const response = await fetch(
+    `https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`,
+  );
+
+  if (!response.ok) {
+    throw new Error("Invalid Google ID token");
+  }
+
+  const tokenData = await response.json();
+
+  if (tokenData.aud !== process.env.GOOGLE_CLIENT_ID) {
+    throw new Error("Invalid Google client ID");
+  }
+
+  if (tokenData.email_verified !== "true") {
+    throw new Error("Google email is not verified");
+  }
+
+  return tokenData;
+};
+
+export const googleLogin = async (req, res, next) => {
+  try {
+    const { idToken } = req.body;
+
+    if (!idToken) {
+      return res.status(400).json({
+        success: false,
+        error: "Google ID token is required",
+        statusCode: 400,
+      });
+    }
+
+    const tokenData = await verifyGoogleToken(idToken);
+    const { email, name, picture, sub: googleId } = tokenData;
+
+    let user = await User.findOne({ email });
+
+    if (user) {
+      if (!user.googleId) {
+        user.googleId = googleId;
+        user.authProvider = "google";
+        if (picture) {
+          user.profileImage = picture;
+        }
+        await user.save({ validateBeforeSave: false });
+      }
+    } else {
+      const randomPassword = crypto.randomBytes(32).toString("hex");
+
+      user = await User.create({
+        username: name || email.split("@")[0],
+        email,
+        password: randomPassword,
+        googleId,
+        authProvider: "google",
+        profileImage: picture || null,
+      });
+    }
+
+    const token = generateToken(user._id);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        user: {
+          id: user._id,
+          username: user.username,
+          email: user.email,
+          profileImage: user.profileImage,
+        },
+        token,
+      },
+      message: "Google login successful",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Get user profile
 // @route   GET /api/auth/profile
 // @access  Private
@@ -229,8 +310,7 @@ export const forgotPassword = async (req, res, next) => {
       user.resetPasswordExpire = Date.now() + 30 * 60 * 1000;
       await user.save({ validateBeforeSave: false });
 
-      const frontendUrl =
-        process.env.FRONTEND_URL || "http://localhost:5173";
+      const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
       const resetUrl = `${frontendUrl}/reset-password/${resetToken}`;
 
       try {
@@ -269,10 +349,7 @@ export const resetPassword = async (req, res, next) => {
       });
     }
 
-    const hashedToken = crypto
-      .createHash("sha256")
-      .update(token)
-      .digest("hex");
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
 
     const user = await User.findOne({
       resetPasswordToken: hashedToken,

@@ -3,6 +3,7 @@ import { body } from "express-validator";
 import {
   register,
   login,
+  googleLogin,
   getProfile,
   updateProfile,
   changePassword,
@@ -43,6 +44,10 @@ const forgotPasswordValidation = [
     .withMessage("Please provide a valid email"),
 ];
 
+const googleLoginValidation = [
+  body("idToken").notEmpty().withMessage("Google ID token is required"),
+];
+
 const resetPasswordValidation = [
   body("password")
     .isLength({ min: 6 })
@@ -52,6 +57,7 @@ const resetPasswordValidation = [
 // Public routes
 router.post("/register", registerValidation, register);
 router.post("/login", loginValidation, login);
+router.post("/google-login", googleLoginValidation, googleLogin);
 router.post("/forgot-password", forgotPasswordValidation, forgotPassword);
 router.post("/reset-password/:token", resetPasswordValidation, resetPassword);
 

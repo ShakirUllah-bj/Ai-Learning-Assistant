@@ -19,9 +19,22 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: [true, "Please provide a valid password"],
+      required: function () {
+        return !this.googleId;
+      },
       minlength: [6, "Password must be at least 6 characters long"],
       select: false,
+    },
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true,
+      default: null,
+    },
+    authProvider: {
+      type: String,
+      enum: ["local", "google"],
+      default: "local",
     },
     profileImage: {
       type: String,

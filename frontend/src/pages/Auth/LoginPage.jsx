@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/useAuth";
 import authService from "../../services/authService";
@@ -9,6 +9,7 @@ import {
   ArrowRight,
   Eye,
   EyeOff,
+  LogIn,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -21,6 +22,85 @@ const LoginPage = () => {
 
   const navigate = useNavigate();
   const { login } = useAuth();
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  const handleGoogleResponse = async (response) => {
+    if (!response?.credential) {
+      setError("Google sign-in failed. Please try again.");
+      return;
+    }
+
+    setError("");
+    setGoogleLoading(true);
+
+    try {
+      const { token, user } = await authService.googleLogin(
+        response.credential,
+      );
+      login(user, token);
+      toast.success("Logged in with Google!");
+      navigate("/dashboard");
+    } catch (err) {
+      const message =
+        err.error ||
+        err.message ||
+        "Failed to login with Google. Please try again.";
+      setError(message);
+      toast.error(message);
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!googleClientId) {
+      return;
+    }
+
+    const initializeGoogle = () => {
+      if (!window.google?.accounts?.id) {
+        return;
+      }
+
+      window.google.accounts.id.initialize({
+        client_id: googleClientId,
+        callback: handleGoogleResponse,
+      });
+    };
+
+    if (window.google?.accounts?.id) {
+      initializeGoogle();
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.defer = true;
+    script.onload = initializeGoogle;
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, [googleClientId]);
+
+  const handleGoogleSignIn = () => {
+    if (!googleClientId) {
+      setError("Google sign-in is not configured.");
+      toast.error("Google sign-in is not configured.");
+      return;
+    }
+
+    if (!window.google?.accounts?.id) {
+      setError("Google sign-in is not available right now.");
+      toast.error("Google sign-in is not available right now.");
+      return;
+    }
+
+    window.google.accounts.id.prompt();
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -172,6 +252,25 @@ const LoginPage = () => {
               )}
             </button>
           </form>
+
+          <button
+            type="button"
+            onClick={handleGoogleSignIn}
+            disabled={googleLoading}
+            className="w-full h-12 mt-4 flex items-center justify-center gap-2 border border-slate-300 bg-white text-slate-700 text-sm font-semibold rounded-xl transition-all duration-200 hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {googleLoading ? (
+              <>
+                <div className="size-4 border-2 border-slate-300 border-t-slate-500 rounded-full animate-spin" />
+                Continuing with Google...
+              </>
+            ) : (
+              <>
+                <LogIn className="size-4" strokeWidth={2} />
+                Continue with Google
+              </>
+            )}
+          </button>
 
           {/* Footer */}
           <div className="mt-8 pt-6 border-t border-slate-200">

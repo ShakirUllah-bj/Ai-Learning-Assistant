@@ -7,6 +7,7 @@ export const API_PATHS = {
     GET_PROFILE: "/api/auth/profile",
     UPDATE_PROFILE: "/api/auth/profile",
     CHANGE_PASSWORD: "/api/auth/change-password",
+    GOOGLE_LOGIN: "/api/auth/google-login",
     FORGOT_PASSWORD: "/api/auth/forgot-password",
     RESET_PASSWORD: (token) => `/api/auth/reset-password/${token}`,
   },

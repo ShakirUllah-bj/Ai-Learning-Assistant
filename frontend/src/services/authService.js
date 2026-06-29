@@ -85,6 +85,17 @@ const resetPassword = async (token, password) => {
   }
 };
 
+const googleLogin = async (idToken) => {
+  try {
+    const response = await axiosInstance.post(API_PATHS.AUTH.GOOGLE_LOGIN, {
+      idToken,
+    });
+    return response.data.data;
+  } catch (error) {
+    throw error.response?.data || { message: "An unknown error occured" };
+  }
+};
+
 const authService = {
   login,
   register,
@@ -93,6 +104,7 @@ const authService = {
   changePassword,
   forgotPassword,
   resetPassword,
+  googleLogin,
 };
 
 export default authService;
