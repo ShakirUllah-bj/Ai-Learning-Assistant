@@ -56,6 +56,10 @@ const documentSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    cloudinaryPublicId: {
+      type: String,
+      default: null,
+    },
     status: {
       type: String,
       enum: ["processing", "ready", "failed"],

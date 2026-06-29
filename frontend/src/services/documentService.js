@@ -49,11 +49,25 @@ const getDocumentById = async (id) => {
   }
 };
 
+const getDocumentStream = async (id) => {
+  try {
+    const response = await axiosInstance.get(`/api/documents/${id}/stream`, {
+      responseType: "blob",
+    });
+    return response.data;
+  } catch (error) {
+    throw (
+      error.response?.data || { message: "Failed to load document preview" }
+    );
+  }
+};
+
 const documentService = {
   getDocuments,
   uploadDocument,
   deleteDocument,
   getDocumentById,
+  getDocumentStream,
 };
 
 export default documentService;

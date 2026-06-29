@@ -2,6 +2,8 @@ import multer from "multer";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
+import cloudinary from "./cloudinary.js";
+import { Readable } from "stream";
 
 // ES6 module __dirname alternative
 const __filename = fileURLToPath(import.meta.url);
@@ -12,16 +14,7 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Configure multer storage
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, `${uniqueSuffix}-${file.originalname}`);
-  },
-});
+const storage = multer.memoryStorage();
 
 // File filter to only accept PDFs
 const fileFilter = (req, file, cb) => {
@@ -39,5 +32,34 @@ const upload = multer({
   fileFilter,
   limits: parseInt(process.env.MAX_FILE_SIZE) || 10485760, // 10MB limit
 });
+
+export const uploadToCloudinary = (buffer, originalname) => {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder: "ai_learning_assistant",
+        resource_type: "raw",
+        access_mode: "public",
+        type: "upload",
+        format: "pdf",
+        overwrite: true,
+        public_id: `${Date.now()}-${originalname.replace(/\s+/g, "-")}`,
+      },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      },
+    );
+
+    const readable = new Readable({
+      read() {
+        this.push(buffer);
+        this.push(null);
+      },
+    });
+
+    readable.pipe(uploadStream);
+  });
+};
 
 export default upload;

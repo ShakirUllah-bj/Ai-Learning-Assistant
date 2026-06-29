@@ -15,6 +15,7 @@ const DocumentDetailPage = () => {
   const { id } = useParams();
   const [document, setDocument] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState(null);
   const [activeTab, setActiveTab] = useState("Content");
 
   useEffect(() => {
@@ -33,30 +34,38 @@ const DocumentDetailPage = () => {
         setLoading(false);
       }
     };
+
     if (id) {
       fetchDocumentDetails();
     }
   }, [id]);
 
-  // Helper function to get the full PDF URL
-  const getPdfUrl = () => {
-    // Support both response format { success, data: {...} } and direct {...}
-    const docData = document?.data || document;
+  useEffect(() => {
+    let objectUrl = null;
 
-    if (!docData?.fileUrl && !docData?.filePath) {
-      console.warn("No file path or URL found in document:", docData);
-      return null;
-    }
+    const loadPdfPreview = async () => {
+      if (!id) return;
 
-    const filePath = docData.fileUrl || docData.filePath;
+      try {
+        const blob = await documentService.getDocumentStream(id);
+        objectUrl = URL.createObjectURL(blob);
+        setPdfUrl(objectUrl);
+      } catch (error) {
+        console.error("Error loading document preview:", error);
+        toast.error(
+          error.error || error.message || "Failed to load document preview",
+        );
+      }
+    };
 
-    if (filePath.startsWith("http://") || filePath.startsWith("https://")) {
-      return filePath;
-    }
+    loadPdfPreview();
 
-    const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
-    return `${baseUrl}${filePath.startsWith("/") ? "" : "/"}${filePath}`;
-  };
+    return () => {
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [id]);
 
   const renderContent = () => {
     if (loading) {
@@ -67,8 +76,6 @@ const DocumentDetailPage = () => {
       return <div className="text-center p-8">PDF not available.</div>;
     }
 
-    const pdfUrl = getPdfUrl();
-
     return (
       <div className="bg-white border border-gray-300 rounded-lg overflow-hidden shadow-lg">
         <div className="flex items-center justify-between p-4 bg-gray-50 border-b border-gray-300">
@@ -76,7 +83,7 @@ const DocumentDetailPage = () => {
             Document Viewer
           </span>
           <a
-            href={pdfUrl}
+            href={pdfUrl || "#"}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
@@ -89,13 +96,19 @@ const DocumentDetailPage = () => {
           </a>
         </div>
         <div className="bg-gray-100 p-1">
-          <iframe
-            src={pdfUrl}
-            className="w-full h-[70vh] bg-white rounded border border-gray-300"
-            title="PDF Viewer"
-            frameBorder="0"
-            style={{ colorScheme: "light" }}
-          />
+          {pdfUrl ? (
+            <iframe
+              src={pdfUrl}
+              className="w-full h-[70vh] bg-white rounded border border-gray-300"
+              title="PDF Viewer"
+              frameBorder="0"
+              style={{ colorScheme: "light" }}
+            />
+          ) : (
+            <div className="flex h-[70vh] items-center justify-center text-gray-500">
+              Loading preview...
+            </div>
+          )}
         </div>
       </div>
     );

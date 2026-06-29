@@ -3,6 +3,7 @@ import {
   uploadDocument,
   getDocuments,
   getDocument,
+  streamDocument,
   deleteDocument,
 } from "../controllers/documentController.js";
 import protect from "../middleware/auth.js";
@@ -15,6 +16,7 @@ router.use(protect);
 
 router.post("/upload", upload.single("file"), uploadDocument);
 router.get("/", getDocuments);
+router.get("/:id/stream", streamDocument);
 router.get("/:id", getDocument);
 router.delete("/:id", deleteDocument);
 

@@ -6,6 +6,20 @@ import { ChunkText } from "../utils/textChunker.js";
 import fs from "fs/promises";
 import path from "path";
 import mongoose from "mongoose";
+import cloudinary from "../config/cloudinary.js";
+import { uploadToCloudinary } from "../config/multer.js";
+import { Readable } from "stream";
+
+const createSignedCloudinaryUrl = (publicId) => {
+  if (!publicId) return null;
+
+  return cloudinary.url(publicId, {
+    resource_type: "raw",
+    type: "upload",
+    sign_url: true,
+    expires_at: Math.floor(Date.now() / 1000) + 3600,
+  });
+};
 
 // @desc    Upload PDF document
 // @route   POST /api/documents/upload
@@ -23,8 +37,6 @@ export const uploadDocument = async (req, res, next) => {
     const { title } = req.body;
 
     if (!title) {
-      // Delete the uploaded file if title is missing
-      await fs.unlink(req.file.path);
       return res.status(400).json({
         success: false,
         error: "Please provide a title for the document",
@@ -32,23 +44,32 @@ export const uploadDocument = async (req, res, next) => {
       });
     }
 
-    // Construct the URL for the uploaded file
-    const baseUrl = `${req.protocol}://${req.get("host")}`;
-    const fileUrl = `${baseUrl}/uploads/documents/${req.file.filename}`;
+    const uploadResult = await uploadToCloudinary(
+      req.file.buffer,
+      req.file.originalname,
+    );
+
+    const signedUrl = createSignedCloudinaryUrl(uploadResult.public_id);
 
     // Create document record in the database
     const document = await Document.create({
       userId: req.user._id,
       title,
-      fileUrl,
+      fileUrl: signedUrl,
       fileName: req.file.originalname,
-      filePath: req.file.path,
+      filePath: uploadResult.secure_url,
       fileSize: req.file.size,
+      cloudinaryPublicId: uploadResult.public_id,
       status: "processing",
     });
 
     // Process the PDF in the background {in production, use a queue like Bull}
-    processPDF(document._id, req.file.path).catch((err) => {
+    processPDF(
+      document._id,
+      req.file.buffer,
+      signedUrl,
+      uploadResult.public_id,
+    ).catch((err) => {
       console.error("PDF processing error: ", err);
     });
 
@@ -60,25 +81,30 @@ export const uploadDocument = async (req, res, next) => {
     });
     console.log("Document uploaded: ", document._id);
   } catch (error) {
-    // Clean up file on error
-    if (req.file) {
-      await fs.unlink(req.file.path).catch(() => {});
-    }
     next(error);
   }
 };
 
 // Helper function to process PDF
-const processPDF = async (documentId, filePath) => {
+const processPDF = async (documentId, fileBuffer, fileUrl, publicId) => {
   try {
-    const { text } = await extractTextFromPDF(filePath);
+    const tempFilePath = path.join(
+      process.cwd(),
+      "uploads",
+      `${documentId}.pdf`,
+    );
+    await fs.writeFile(tempFilePath, Buffer.from(fileBuffer));
+
+    const { text } = await extractTextFromPDF(tempFilePath);
     // Create text chunks
     const chunks = ChunkText(text, 500, 50); // Adjust chunk size as needed
 
-    // Update document
+    // Update document with extracted text, chunks, and Cloudinary info
     await Document.findByIdAndUpdate(documentId, {
       extractedText: text,
       chunks: chunks,
+      fileUrl: fileUrl,
+      cloudinaryPublicId: publicId,
       status: "ready",
     });
 
@@ -87,6 +113,19 @@ const processPDF = async (documentId, filePath) => {
     console.error(`Error processing document ${documentId}: `, error);
     await Document.findByIdAndUpdate(documentId, {
       status: "failed",
+    });
+  } finally {
+    // Delete the temporary local file
+    const tempFilePath = path.join(
+      process.cwd(),
+      "uploads",
+      `${documentId}.pdf`,
+    );
+    await fs.unlink(tempFilePath).catch((err) => {
+      console.error(
+        `Failed to delete temporary file ${tempFilePath}:`,
+        err.message,
+      );
     });
   }
 };
@@ -134,10 +173,19 @@ export const getDocuments = async (req, res, next) => {
       },
     ]);
 
+    const documentsWithSignedUrls = documents.map((document) => {
+      const signedUrl = createSignedCloudinaryUrl(document.cloudinaryPublicId);
+      return {
+        ...document,
+        fileUrl: signedUrl || document.fileUrl || document.filePath,
+        filePath: signedUrl || document.filePath || document.fileUrl,
+      };
+    });
+
     res.status(200).json({
       success: true,
-      data: documents,
-      count: documents.length,
+      data: documentsWithSignedUrls,
+      count: documentsWithSignedUrls.length,
     });
   } catch (error) {
     next(error);
@@ -191,8 +239,15 @@ export const getDocument = async (req, res, next) => {
 
     // Combine document data with counts
     const documentData = document.toObject();
+    const signedUrl = createSignedCloudinaryUrl(
+      documentData.cloudinaryPublicId,
+    );
     documentData.flashcardCount = flashcardCount;
     documentData.quizCount = quizCount;
+    documentData.fileUrl =
+      signedUrl || documentData.fileUrl || documentData.filePath;
+    documentData.filePath =
+      signedUrl || documentData.filePath || documentData.fileUrl;
 
     res.status(200).json({
       success: true,
@@ -207,6 +262,68 @@ export const getDocument = async (req, res, next) => {
 // @desc    delete document
 // @route   DELETE /api/documents/:id
 // @access  Private
+export const streamDocument = async (req, res, next) => {
+  try {
+    const documentId = req.params.id;
+
+    if (!mongoose.Types.ObjectId.isValid(documentId)) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid document ID format",
+        statusCode: 400,
+      });
+    }
+
+    const document = await Document.findOne({
+      _id: new mongoose.Types.ObjectId(documentId),
+      userId: req.user._id,
+    });
+
+    if (!document) {
+      return res.status(404).json({
+        success: false,
+        error: "Document not found",
+        statusCode: 404,
+      });
+    }
+
+    if (!document.cloudinaryPublicId) {
+      return res.status(404).json({
+        success: false,
+        error: "Document file not found",
+        statusCode: 404,
+      });
+    }
+
+    const downloadUrl = cloudinary.utils.private_download_url(
+      document.cloudinaryPublicId,
+      "pdf",
+      {
+        resource_type: "raw",
+        type: "upload",
+      },
+    );
+
+    const response = await fetch(downloadUrl);
+
+    if (!response.ok) {
+      throw new Error(`Cloudinary download failed: ${response.status}`);
+    }
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `inline; filename="${document.fileName || "document.pdf"}"`,
+    );
+
+    const arrayBuffer = await response.arrayBuffer();
+    res.send(Buffer.from(arrayBuffer));
+  } catch (error) {
+    console.error("Error streaming document:", error.message);
+    next(error);
+  }
+};
+
 export const deleteDocument = async (req, res, next) => {
   try {
     // Validate ObjectId format
@@ -231,16 +348,19 @@ export const deleteDocument = async (req, res, next) => {
       });
     }
 
-    // Delete file from filesystem
-    const localFilePath = document.filePath?.startsWith("http")
-      ? path.join(
-          process.cwd(),
-          "uploads",
-          "documents",
-          path.basename(document.filePath),
-        )
-      : document.filePath;
-    await fs.unlink(localFilePath).catch(() => {});
+    // Delete file from Cloudinary if it exists
+    if (document.cloudinaryPublicId) {
+      await cloudinary.uploader
+        .destroy(document.cloudinaryPublicId, {
+          resource_type: "image", // PDFs are uploaded as 'image' resource_type in Cloudinary
+        })
+        .catch((err) => {
+          console.error(
+            `Failed to delete Cloudinary asset ${document.cloudinaryPublicId}:`,
+            err.message,
+          );
+        });
+    }
 
     // Delete document record
     await Document.deleteOne({ _id: document._id });
